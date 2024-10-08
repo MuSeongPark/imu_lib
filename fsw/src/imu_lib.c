@@ -102,6 +102,14 @@ int32 IMU_HWInit()
 
     int32 whoami = wiringPiI2CReadReg8(fd, WHO_AM_I);
     if(whoami != 0x98)
+    {
+        return -1;
+    }
+
+    wiringPiI2CWriteReg8(fd, CONFIG, 0x00); //CONFIGURATION 00 000 000
+    wiringPiI2CWriteReg8(fd, GYRO_CONFIG, 0x00); // 000
+    wiringPiI2CWriteReg8(fd, ACCEL_CONFIG, 0x00);
+
 
 
     return CFE_SUCCESS;

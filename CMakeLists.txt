@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 2.6.4)
-project(CFE_SAMPLE_LIB C)
+project(CFE_IMU_LIB C)
 
 include_directories(fsw/public_inc)
+include_directories(fsw/src)
 
 # The shared OSAL and cFE include directories should always be used
 # Note that this intentionally does NOT include PSP-specific includes, just the generic

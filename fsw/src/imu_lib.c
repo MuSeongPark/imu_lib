@@ -71,27 +71,36 @@
 #define ZA_OFFSET_H 0x7D
 #define ZA_OFFSET_L 0x7E
 
+//Gyro scale
+#define GYRO_SCALE_250DPS  (0<<2) //250dps
+#define GYRO_SCLAE_500DPS  (1<<2) //500dps
+#define GYRO_SCLAE_1000DPS (2<<2) //1000dps
+#define GYRO_SCLAE_2000DPS (3<<2) //2000dps
+
+//Accel scale
+#define ACCEL_SCALE_2G  (0<<2) //2g
+#define ACCEL_SCALE_4G  (1<<2) //4g
+#define ACCEL_SCALE_8G  (2<<2) //8g
+#define ACCEL_SCALE_16G (3<<2) //16g
+
 #define ADDRES 0x68 //this is depend on the device env.
 
-#include "cfe.h"
 #include <wiringPi.h>
 #include <errno.h>
 
-int32 IMU_LibInit()
-{
-    int32 fd = wiringPiI2CSetup(ADDRES);
-    if(fd < 0)
-    {
-        OS_printf("Error: I2C Device Setup for IMU Sensor %s\n", errno);
-        return -1;
-    }
+#include "imu_lib.h"
 
+
+int32 IMU_LibInit(void)
+{
+    int32 init = IMU_HWInit();
+    if (init != CFE_SUCCESS) { return -1; }
 
     return CFE_SUCCESS;
 }
 
 
-int32 IMU_HWInit()
+int32 IMU_HWInit(void)
 {
     int32 fd = wiringPiI2CSetup(ADDRES);
     if(fd < 0)
@@ -106,12 +115,38 @@ int32 IMU_HWInit()
         return -1;
     }
 
-    wiringPiI2CWriteReg8(fd, CONFIG, 0x00); //CONFIGURATION 00 000 000
-    wiringPiI2CWriteReg8(fd, GYRO_CONFIG, 0x00); // 000
-    wiringPiI2CWriteReg8(fd, ACCEL_CONFIG, 0x00);
-
-
+    wiringPiI2CWriteReg8(fd, CONFIG, 0x00);
+    wiringPiI2CWriteReg8(fd, GYRO_CONFIG, GYRO_SCLAE_1000DPS); 
+    wiringPiI2CWriteReg8(fd, ACCEL_CONFIG, ACCEL_SCALE_16G);
+    wiringPiI2CWriteReg8(fd, INT_ENABLE, 0x00);
+    
 
     return CFE_SUCCESS;
 
+}
+
+
+Gyro_Vector GetGyroData(void)
+{
+    Gyro_Vector gyroData;
+    int32 fd = wiringPiI2CSetup(ADDRES);
+    
+    //_H: high bytes, _L:low bytes
+    gyroData.x = wiringPiI2CReadReg8(fd, GYRO_XOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_XOUT_H) << 8);
+    gyroData.y = wiringPiI2CReadReg8(fd, GYRO_YOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_YOUT_H) << 8);
+    gyroData.z = wiringPiI2CReadReg8(fd, GYRO_ZOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_ZOUT_H) << 8);
+
+    return gyroData;
+}
+
+float GetTempData(void)
+{
+    Gyro_Vector gyroData;
+    int32 fd = wiringPiI2CSetup(ADDRES);
+    
+    //_H: high bytes, _L:low bytes
+    float TempData = wiringPiI2CReadReg8(fd, TEMP_OUT_L) | (wiringPiI2CReadReg8(fd, TEMP_OUT_H) << 8);
+
+
+    return TempData;
 }

@@ -138,9 +138,9 @@ Gyro_Vector GetGyroData(void)
     int32_t fd = wiringPiI2CSetup(ADDRES);
     
     //_H: high bytes, _L:low bytes
-    gyroData.x = wiringPiI2CReadReg8(fd, GYRO_XOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_XOUT_H) << 8);
-    gyroData.y = wiringPiI2CReadReg8(fd, GYRO_YOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_YOUT_H) << 8);
-    gyroData.z = wiringPiI2CReadReg8(fd, GYRO_ZOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_ZOUT_H) << 8);
+    gyroData.x = (wiringPiI2CReadReg8(fd, GYRO_XOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_XOUT_H) << 8)) / 131;
+    gyroData.y = (wiringPiI2CReadReg8(fd, GYRO_YOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_YOUT_H) << 8)) / 131;
+    gyroData.z = (wiringPiI2CReadReg8(fd, GYRO_ZOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_ZOUT_H) << 8)) / 131;
 
     return gyroData;
 }
@@ -151,8 +151,8 @@ float GetTempData(void)
     int32_t fd = wiringPiI2CSetup(ADDRES);
     
     //_H: high bytes, _L:low bytes
-    uint16_t RawTempData = (wiringPiI2CReadReg8(fd, TEMP_OUT_L)) | (wiringPiI2CReadReg8(fd, TEMP_OUT_H) << 8);
-
+    //int16_t RawTempData = (int16_t)(wiringPiI2CReadReg8(fd, TEMP_OUT_L)) | ((int16_t)wiringPiI2CReadReg8(fd, TEMP_OUT_H) << 8);
+    int16_t RawTempData = (wiringPiI2CReadReg8(fd, TEMP_OUT_L)) | (wiringPiI2CReadReg8(fd, TEMP_OUT_H) << 8);
     //Room Temp Offset: default:0, Sensitivity: 326.8
     float TempData = RawTempData/326.8 + 25;
 

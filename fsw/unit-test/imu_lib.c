@@ -94,6 +94,7 @@
 
 #include <wiringPiI2C.h>
 #include <errno.h>
+#include <string.h>
 
 #include "i2c_lib.h"
 #include "imu_lib.h"
@@ -119,7 +120,7 @@ int32_t IMU_HWInit(void)
     
     if(whoami != 0x12) //0x12
     {
-        printf("Error: who am i register value is not 0x12 %d\n", errno);
+        fprintf(stderr, "Error: who am i register value is not 0x12 %s\n", strerror(errno));
         return -1;
     }
 

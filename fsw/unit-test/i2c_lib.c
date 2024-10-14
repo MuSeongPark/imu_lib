@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
 
 #include "i2c_lib.h"
 
@@ -22,13 +23,13 @@ int32_t i2cDeviceInit(uint8_t adapter_num, uint8_t devAddr)
     int32_t fd = open(dev, O_RDWR);
     if(fd < 0)
     {
-        printf("Error: Can't open i2c device %s, %s\n", *dev, errno);
+        fprintf(stderr, "Error: Can't open i2c device %s, %s\n", dev, strerror(errno));
         return -1;
     }
 
     if(ioctl(fd, I2C_SLAVE, devAddr) < 0)
     {
-        printf("Error: Can't access to i2c device address %x, %s\n", devAddr, errno);
+        fprintf(stderr, "Error: Can't access to i2c device address %x, %s\n", devAddr, strerror(errno));
         return -1;
     }
     return fd;

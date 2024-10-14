@@ -113,17 +113,13 @@ int32_t IMU_LibInit(void)
 int32_t IMU_HWInit(void)
 {
     int32_t fd = wiringPiI2CSetup(ADDRESS);
-    if(fd < 0)
-    {
-        printf("Error: I2C Device Setup for IMU Sensor %s\n", errno);
-        return -1;
-    }
+    if(fd < 0) { return -1; }
 
     int32_t whoami = wiringPiI2CReadReg8(fd, WHO_AM_I);
     
-    if(whoami != 0x12)
+    if(whoami != 0x12) //0x12
     {
-        printf("Error: who am i register value is not 0x12 %s\n", errno);
+        printf("Error: who am i register value is not 0x12 %d\n", errno);
         return -1;
     }
 

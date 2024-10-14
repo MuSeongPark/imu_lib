@@ -35,22 +35,19 @@ int32_t i2cDeviceInit(uint8_t adapter_num, uint8_t devAddr)
 }
 
 
-int32_t i2cReadReg8(int32_t fd, uint8_t regAddr)
+uint8_t i2cReadReg8(int32_t fd, uint8_t regAddr)
 {
     union i2c_smbus_data data;
-
     struct i2c_smbus_ioctl_data args; //This is defined at linux/i2c-dev.h
 
     args.read_write = I2C_SMBUS_READ;
     args.command = regAddr;
-    args.size = I2C_SMBUS_BYTE; // 1byte
+    args.size = I2C_SMBUS_BYTE_DATA; // 1byte
     args.data = &data;
 
     if (ioctl(fd, I2C_SMBUS, &args) < 0) { return -1; }
 
-    return (data.byte & 0xFF);
-
-
+    return data.byte & 0xFF;
 }
 
 
@@ -58,5 +55,6 @@ int8_t i2CWriteReg8(int32_t fd, uint8_t regAddr, int8_t data)
 {
 
 }
+
 
 

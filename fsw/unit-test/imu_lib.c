@@ -95,6 +95,7 @@
 #include <wiringPiI2C.h>
 #include <errno.h>
 
+#include "i2c_lib.h"
 #include "imu_lib.h"
 
 int32_t IMU_HWInit(void);
@@ -154,12 +155,11 @@ Gyro_Vector GetGyroData(void)
 
 float GetTempData(void)
 {
-    Gyro_Vector gyroData;
     int32_t fd = wiringPiI2CSetup(ADDRESS);
     
     //_H: high bytes, _L:low bytes
-    int16_t RawTempData = (int16_t)(wiringPiI2CReadReg8(fd, TEMP_OUT_L)) | (int16_t)(wiringPiI2CReadReg8(fd, TEMP_OUT_H) << 8);
-    
+    int16_t RawTempData = (int16_t)(i2cReadReg8(fd, TEMP_OUT_L)) | (int16_t)(i2cReadReg8(fd, TEMP_OUT_H) << 8);
+    printf("%x %x\n", i2cReadReg8(fd, TEMP_OUT_H), i2cReadReg8(fd, TEMP_OUT_L));
     //Room Temp Offset: default:0, Sensitivity: 326.8
     float TempData = (RawTempData/326.8) + 25;
 

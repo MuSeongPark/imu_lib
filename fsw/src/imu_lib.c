@@ -89,12 +89,14 @@
 #include <errno.h>
 
 #include "imu_lib.h"
+#include "cfe.h"
 
+int32 IMU_HWInit(void);
 
 int32 IMU_LibInit(void)
 {
-    int32 init = IMU_HWInit();
-    if (init != CFE_SUCCESS) { return -1; }
+    int32 status = IMU_HWInit();
+    if (status != CFE_SUCCESS) { return -1; }
 
     return CFE_SUCCESS;
 }
@@ -125,16 +127,17 @@ int32 IMU_HWInit(void)
 
 }
 
-
+// write/ stopbit / read
+// ioctl 
 Gyro_Vector GetGyroData(void)
 {
     Gyro_Vector gyroData;
     int32 fd = wiringPiI2CSetup(ADDRES);
     
     //_H: high bytes, _L:low bytes
-    gyroData.x = wiringPiI2CReadReg8(fd, GYRO_XOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_XOUT_H) << 8);
-    gyroData.y = wiringPiI2CReadReg8(fd, GYRO_YOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_YOUT_H) << 8);
-    gyroData.z = wiringPiI2CReadReg8(fd, GYRO_ZOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_ZOUT_H) << 8);
+    gyroData.x = (wiringPiI2CReadReg8(fd, GYRO_XOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_XOUT_H) << 8)) / 131.F;
+    gyroData.y = (wiringPiI2CReadReg8(fd, GYRO_YOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_YOUT_H) << 8)) / 131.F;
+    gyroData.z = (wiringPiI2CReadReg8(fd, GYRO_ZOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_ZOUT_H) << 8)) / 131.F;
 
     return gyroData;
 }
@@ -145,8 +148,10 @@ float GetTempData(void)
     int32 fd = wiringPiI2CSetup(ADDRES);
     
     //_H: high bytes, _L:low bytes
-    float TempData = wiringPiI2CReadReg8(fd, TEMP_OUT_L) | (wiringPiI2CReadReg8(fd, TEMP_OUT_H) << 8);
-
+    //int16_t RawTempData = (int16_t)(wiringPiI2CReadReg8(fd, TEMP_OUT_L)) | ((int16_t)wiringPiI2CReadReg8(fd, TEMP_OUT_H) << 8);
+    int16_t RawTempData = (wiringPiI2CReadReg8(fd, TEMP_OUT_L)) | (wiringPiI2CReadReg8(fd, TEMP_OUT_H) << 8);
+    //Room Temp Offset: default:0, Sensitivity: 326.8
+    float TempData = RawTempData/326.8 + 25;
 
     return TempData;
 }

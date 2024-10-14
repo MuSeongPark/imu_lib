@@ -1,0 +1,2 @@
+#These are useful links for i2c-driver
+https://www.lazenca.net/pages/viewpage.action?pageId=23789739

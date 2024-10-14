@@ -8,9 +8,13 @@
 */
 
 
-#define SELF_TEST_X_GYRO 0x00
-#define SELF_TEST_Y_GYRO 0x01
-#define SELF_TEST_Z_GYRO 0x02
+#define XG_OFFS_TC_H 0x04
+#define XG_OFFS_TC_L 0x05
+#define YG_OFFS_TC_H 0x07
+#define YG_OFFS_TC_L 0x08
+#define ZG_OFFS_TC_H 0x0A
+#define ZG_OFFS_TC_L 0x0B
+
 #define SELF_TEST_X_ACCEL 0x0D
 #define SELF_TEST_Y_ACCEL 0x0E
 #define SELF_TEST_Z_ACCEL 0x0F
@@ -21,19 +25,21 @@
 #define YG_OFFS_USRL 0x16
 #define ZG_OFFS_USRH 0x17
 #define ZG_OFFS_USRL 0x18
-
 #define SMPLRT_DIV 0x19
+
 #define CONFIG 0x1A
 #define GYRO_CONFIG 0x1B
 #define ACCEL_CONFIG 0x1C
 #define ACCEL_CONFIG_2 0x1D
 #define LP_MODE_CFG 0x1E
-#define ACCEL_WOM_THR 0x1F
+#define ACCEL_WOM_X_THR 0x20
+#define ACCEL_WOM_Y_THR 0x21
+#define ACCEL_WOM_Z_THR 0x22
 #define FIFO_EN 0x23
 #define FSYNC_INT 0x36
 #define INT_PIN_CFG 0x37
 #define INT_ENABLE 0x38
-#define DMP_INT_STATUS 0x39
+#define FIFO_WM_INT_STATUS 0x39
 #define INT_STATUS 0x3A
 
 #define ACCEL_XOUT_H 0x3B
@@ -53,12 +59,18 @@
 #define GYRO_ZOUT_H 0x47
 #define GYRO_ZOUT_L 0x48
 
+#define SELF_TEST_X_GYRO 0x50
+#define SELF_TEST_Y_GYRO 0x51
+#define SELF_TEST_Z_GYRO 0x52
+
+#define FIFO_WM_TH1 0x60
+#define FIFO_WM_TH2 0x61
 #define SIGNAL_PATH_RESET 0x68
 #define ACCEL_INTEL_CTRL 0x69
 #define USER_CTRL 0x6A
 #define PWR_MGMT_1 0x6B
 #define PWR_MGMT_2 0x6C
-
+#define I2C_IF 0x70
 #define FIFO_COUNTH 0x72
 #define FIFO_COUNTL 0x73
 #define FIFO_R_W 0x74
@@ -71,19 +83,14 @@
 #define ZA_OFFSET_H 0x7D
 #define ZA_OFFSET_L 0x7E
 
-//Gyro scale
-#define GYRO_SCALE_250DPS  (0<<2) //250dps
-#define GYRO_SCALE_500DPS  (1<<2) //500dps
-#define GYRO_SCALE_1000DPS (2<<2) //1000dps
-#define GYRO_SCALE_2000DPS (3<<2) //2000dps
+//Gyro Scale
+#define GYRO_SCALE_250DPS (0 << 3)
+#define GYRO_SCALE_500DPS (1 << 3)
+#define GYRO_SCALE_1000DPS (2 << 3)
+#define GYRO_SCALE_2000DPS (3 << 3)
 
-//Accel scale
-#define ACCEL_SCALE_2G  (0<<2) //2g
-#define ACCEL_SCALE_4G  (1<<2) //4g
-#define ACCEL_SCALE_8G  (2<<2) //8g
-#define ACCEL_SCALE_16G (3<<2) //16g
 
-#define ADDRES 0x68 //this is depend on the device env.
+#define ADDRESS 0x68 //this is depend on the device env.
 
 #include <wiringPiI2C.h>
 #include <errno.h>
@@ -95,8 +102,8 @@ int32_t IMU_HWInit(void);
 
 int32_t IMU_LibInit(void)
 {
-    int32_t init = IMU_HWInit();
-    if (init != 0) { return -1; }
+    int32_t status = IMU_HWInit();
+    if (status != 0) { return -1; }
 
     return 0;
 }
@@ -104,7 +111,7 @@ int32_t IMU_LibInit(void)
 
 int32_t IMU_HWInit(void)
 {
-    int32_t fd = wiringPiI2CSetup(ADDRES);
+    int32_t fd = wiringPiI2CSetup(ADDRESS);
     if(fd < 0)
     {
         printf("Error: I2C Device Setup for IMU Sensor %s\n", errno);
@@ -112,21 +119,18 @@ int32_t IMU_HWInit(void)
     }
 
     int32_t whoami = wiringPiI2CReadReg8(fd, WHO_AM_I);
-    /*
-    if(whoami != 0x98)
+    
+    if(whoami != 0x12)
     {
-        printf("Register value is %x \n", whoami);
-        printf("Error: who am i register error %s\n", errno);
+        printf("Error: who am i register value is not 0x12 %s\n", errno);
         return -1;
-    }*/
+    }
 
     wiringPiI2CWriteReg8(fd, CONFIG, 0x00);
-    wiringPiI2CWriteReg8(fd, GYRO_CONFIG, GYRO_SCALE_250DPS);
-    wiringPiI2CWriteReg8(fd, ACCEL_CONFIG, ACCEL_SCALE_16G);
-    wiringPiI2CWriteReg8(fd, INT_ENABLE, 0x00);
-    wiringPiI2CWriteReg8(fd, PWR_MGMT_2, 0x00);
+    wiringPiI2CWriteReg8(fd, GYRO_CONFIG, GYRO_SCALE_500DPS);
+    wiringPiI2CWriteReg8(fd, PWR_MGMT_1, 0x01);
+    wiringPiI2CWriteReg8(fd, PWR_MGMT_2, 0x38);
     
-
     return 0;
 
 }
@@ -135,12 +139,15 @@ int32_t IMU_HWInit(void)
 Gyro_Vector GetGyroData(void)
 {
     Gyro_Vector gyroData;
-    int32_t fd = wiringPiI2CSetup(ADDRES);
+    int32_t fd = wiringPiI2CSetup(ADDRESS);
     
     //_H: high bytes, _L:low bytes
-    gyroData.x = (wiringPiI2CReadReg8(fd, GYRO_XOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_XOUT_H) << 8)) / 131;
-    gyroData.y = (wiringPiI2CReadReg8(fd, GYRO_YOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_YOUT_H) << 8)) / 131;
-    gyroData.z = (wiringPiI2CReadReg8(fd, GYRO_ZOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_ZOUT_H) << 8)) / 131;
+    int16_t x_raw = (int16_t)(wiringPiI2CReadReg8(fd, GYRO_XOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_XOUT_H) << 8));
+    int16_t y_raw = (int16_t)(wiringPiI2CReadReg8(fd, GYRO_YOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_YOUT_H) << 8));
+    int16_t z_raw = (int16_t)(wiringPiI2CReadReg8(fd, GYRO_ZOUT_L) | (wiringPiI2CReadReg8(fd, GYRO_ZOUT_H) << 8));
+    gyroData.x = (float)x_raw / 131.F;
+    gyroData.y = (float)y_raw / 131.F;
+    gyroData.z = (float)z_raw / 131.F;
 
     return gyroData;
 }
@@ -148,13 +155,13 @@ Gyro_Vector GetGyroData(void)
 float GetTempData(void)
 {
     Gyro_Vector gyroData;
-    int32_t fd = wiringPiI2CSetup(ADDRES);
+    int32_t fd = wiringPiI2CSetup(ADDRESS);
     
     //_H: high bytes, _L:low bytes
-    //int16_t RawTempData = (int16_t)(wiringPiI2CReadReg8(fd, TEMP_OUT_L)) | ((int16_t)wiringPiI2CReadReg8(fd, TEMP_OUT_H) << 8);
-    int16_t RawTempData = (wiringPiI2CReadReg8(fd, TEMP_OUT_L)) | (wiringPiI2CReadReg8(fd, TEMP_OUT_H) << 8);
+    int16_t RawTempData = (int16_t)(wiringPiI2CReadReg8(fd, TEMP_OUT_L)) | (int16_t)(wiringPiI2CReadReg8(fd, TEMP_OUT_H) << 8);
+    
     //Room Temp Offset: default:0, Sensitivity: 326.8
-    float TempData = RawTempData/326.8 + 25;
+    float TempData = (RawTempData/326.8) + 25;
 
 
     return TempData;

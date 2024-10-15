@@ -1,7 +1,6 @@
 #ifndef I2C_LIB_H
 #define I2C_LIB_H
 
-#include <stdint.h>
 #include "i2c_lib.h"
 
 int32_t I2C_DeviceInit(uint8_t adapter_num, uint8_t devAddr);

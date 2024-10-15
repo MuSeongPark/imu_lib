@@ -13,8 +13,8 @@
 #ifndef IMU_LIB_H
 #define IMU_LIB_H
 
-#include "imu_lib.h"
 #include "cfe.h"
+#include "imu_lib.h"
 
 typedef struct Gyro_Vector
 {

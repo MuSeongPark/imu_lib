@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "i2c_lib.h"
 
@@ -20,7 +21,7 @@ int32_t I2C_DeviceInit(uint8_t adapter_num, uint8_t devAddr)
     adapter_num: /dev/i2c-(THIS NUMBER)
     devAddr: device address like 0x68
     */
-    char dev[20];
+    char dev[15];
 
     sprintf(dev, "/dev/i2c-%d", adapter_num);
 

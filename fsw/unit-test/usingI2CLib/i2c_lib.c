@@ -65,7 +65,7 @@ int32_t I2C_WriteReg8(int32_t fd, uint8_t regAddr, uint8_t value)
     /*
     fd: file descripter
     regAddr: Register Address that you want to write on
-    value: The value to write on the register
+    value: The value to write in the register
     */
     union i2c_smbus_data data;
     struct i2c_smbus_ioctl_data args;
@@ -76,7 +76,9 @@ int32_t I2C_WriteReg8(int32_t fd, uint8_t regAddr, uint8_t value)
     args.size = I2C_SMBUS_BYTE_DATA; // 1byte
     args.data = &data;
 
-    return ioctl(fd, I2C_SMBUS, &args);
+    if (ioctl(fd, I2C_SMBUS, &args) < 0) { return -1; }
+
+    return 0;
     
 }
 

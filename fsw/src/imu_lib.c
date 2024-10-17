@@ -132,6 +132,8 @@ int32 IMU_HWInit(void)
     I2C_WriteReg8(fd, GYRO_CONFIG, GYRO_SCALE_500DPS);
     I2C_WriteReg8(fd, PWR_MGMT_1, 0x01);
     I2C_WriteReg8(fd, PWR_MGMT_2, 0x38);
+
+    I2C_Close(fd);
     
     return CFE_SUCCESS;
 
@@ -151,6 +153,8 @@ Gyro_Vector GetGyroData(void)
     gyroData.y = (float)y_raw / 131.F;
     gyroData.z = (float)z_raw / 131.F;
 
+    I2C_Close(fd);
+
     return gyroData;
 }
 
@@ -164,6 +168,7 @@ float GetTempData(void)
     //Room Temp Offset: default:0, Sensitivity: 326.8
     float TempData = (RawTempData/326.8) + 25;
 
+    I2C_Close(fd);
 
     return TempData;
 }

@@ -1,16 +1,16 @@
-#include <linux/i2c-dev.h>
+#include <linux/i2c-dev.h> //I2C_SLAVE flag
 #include <linux/i2c.h>
 #include <linux/types.h>
 
-#include <sys/ioctl.h>
-#include <asm/ioctl.h>
+#include <sys/ioctl.h> //ioctl
 
 
-#include <stdio.h>
+#include <stdio.h> //snprintf etc.
 #include <errno.h>
-#include <fcntl.h>
+#include <fcntl.h> //flags like O_RDWR
 #include <string.h>
-#include <stdint.h>
+#include <stdint.h> //int32_t
+#include <unistd.h> //open, read, write
 
 #include "i2c_lib.h"
 
@@ -84,4 +84,81 @@ int32_t I2C_WriteReg8(int32_t fd, uint8_t regAddr, uint8_t value)
 }
 
 
+
+uint8_t I2C_Read8(int32_t fd, uint8_t reg)
+{
+    /*I2C Read 1byte using write and read*/
+    uint8_t data;
+    if(write(fd, &reg, 1) < 0)
+    {
+        fprintf(stderr, "Error: Read 1 Byte from I2C %s\n", strerror(errno));
+        return -1;
+    }
+    if(read(fd, &data, 1) < 0)
+    {
+        fprintf(stderr, "Error: Read 1 Byte from I2C %s\n", strerror(errno));
+        return -1;
+    }
+
+    return data;
+
+}
+
+int32_t I2C_Write8(int32_t fd, uint8_t reg, uint8_t data)
+{
+    /*I2C write 1byte using write and read*/
+    uint8_t buff[2] = {reg, data};
+
+    if(write(fd, &buff, 2) < 0)
+    {
+        fprintf(stderr, "Error: Read 1 Byte from I2C %s\n", strerror(errno));
+        return -1;
+    }
+
+    return 0;
+
+}
+
+
+int32_t I2C_Read(int32_t fd, uint8_t reg, void* data, size_t len)
+{
+    /*I2C Read using write and read*/
+    //uint8_t* data = (uint8_t *) data;
+    
+    if(write(fd, &reg, 1) < 0)
+    {
+        fprintf(stderr, "Error: I2C Read, Can't access to register %s\n", strerror(errno));
+        return -1;
+    }
+    if(read(fd, data, len) < 0)
+    {
+        fprintf(stderr, "Error: I2C Read, Can't read register value %s\n", strerror(errno));
+        return -1;
+    }
+
+    return 0;
+
+}
+
+
+
+int32_t I2C_Write(int32_t fd, uint8_t reg, uint8_t* data, size_t len)
+{
+    //I2C Write using write and read
+    uint8_t data_buff[len+1];
+    data_buff[0] = reg;
+
+    for(int i = 1; i<len+1; i++)
+    {
+        data_buff[i] = *(data++); 
+    }
+    if(write(fd, &reg, len+1) < 0)
+    {
+        fprintf(stderr, "Error: Read 1 Byte from I2C %s\n", strerror(errno));
+        return -1;
+    }
+
+    return 0;
+
+}
 

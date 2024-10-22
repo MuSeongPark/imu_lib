@@ -124,10 +124,10 @@ int32_t IMU_HWInit(void)
         return -1;
     }
 
-    I2C_WriteReg8(fd, CONFIG, 0x00);
-    I2C_WriteReg8(fd, GYRO_CONFIG, GYRO_SCALE_500DPS);
-    I2C_WriteReg8(fd, PWR_MGMT_1, 0x01);
-    I2C_WriteReg8(fd, PWR_MGMT_2, 0x38);
+    I2C_Write8(fd, CONFIG, 0x00);
+    I2C_Write8(fd, GYRO_CONFIG, GYRO_SCALE_500DPS);
+    I2C_Write8(fd, PWR_MGMT_1, 0x01);
+    I2C_Write8(fd, PWR_MGMT_2, 0x38);
     
     return 0;
 
@@ -155,7 +155,8 @@ float GetTempData(void)
     int32_t fd = I2C_DeviceInit(1, ADDRESS);
     
     //_H: high bytes, _L:low bytes
-    int16_t RawTempData = (int16_t)(I2C_ReadReg8(fd, TEMP_OUT_L)) | (int16_t)(I2C_ReadReg8(fd, TEMP_OUT_H) << 8);
+
+    int16_t RawTempData = (int16_t)(I2C_Read8(fd, TEMP_OUT_L)) | (int16_t)(I2C_Read8(fd, TEMP_OUT_H) << 8);
 
     //Room Temp Offset: default:0, Sensitivity: 326.8
     float TempData = (RawTempData/326.8) + 25;
@@ -163,3 +164,4 @@ float GetTempData(void)
 
     return TempData;
 }
+
